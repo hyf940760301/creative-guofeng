@@ -92,7 +92,7 @@ export function createInkPool(ctx) {
       cam.y = damp(cam.y, ty, st.k, dt); cam.z = damp(cam.z, tz, st.k, dt);
       camera.position.set(ptr.x * .6, cam.y + ptr.y * .35, cam.z); camera.lookAt(ptr.x * .2, cam.y - .6, -10); camera.rotation.z = Math.sin(t * .2) * .01;
       // interactive dye — skipped entirely in capture mode (keeps frames deterministic)
-      if (CAPTURE) return;
+      if (CAPTURE && !window.__dye) return;   // capture: off unless a film capture opts in (window.__dye)
       const su = st.ptrScreen; const moved = lastP.x >= 0 ? Math.hypot(su.x - lastP.x, su.y - lastP.y) : 0;
       simMat.uniforms.uSplat.value = st.pointerIn ? clamp(moved * 9, 0, .5) : 0; simMat.uniforms.uPtr.value.copy(su); lastP.copy(su);
       if (!(simMat.uniforms.uSplat.value > 0 || drop > 0 || simLive)) return;

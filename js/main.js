@@ -224,7 +224,7 @@ let first = true;
 function frame(dt, draw = true) {
   st.t += REDUCED ? dt * .4 : dt; st.dt = dt;
   // pointer smoothing (scenes get a calm, damped pointer)
-  st.ptr.set(damp(st.ptr.x, ptr.x, 4, dt), damp(st.ptr.y, ptr.y, 4, dt)); st.ptrScreen.set(ptr.cx / VW, 1 - ptr.cy / VH); st.pointerIn = ptr.in && !CAPTURE;
+  st.ptr.set(damp(st.ptr.x, ptr.x, 4, dt), damp(st.ptr.y, ptr.y, 4, dt)); st.ptrScreen.set(ptr.cx / VW, 1 - ptr.cy / VH); st.pointerIn = ptr.in && (!CAPTURE || !!window.__dye);
   resolve(scrollY_); st.open = clamp(scrollY_ / VH); openFX(st.open);
   const A = state.A, B = state.B, tp = state.tp;
   const gA = groups[A], sA = SC[gA.id];
