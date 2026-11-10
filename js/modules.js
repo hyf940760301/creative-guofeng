@@ -1,5 +1,5 @@
 // Product UI modules: playground, before/after, feature tabs + route drawing, patina, layout demo, workflow
-// timeline, gallery + lightbox, testimonials, stats, pricing toggle, FAQ, waitlist form, mobile menu.
+// timeline, gallery + lightbox, inscriptions, notes, mobile menu.
 // Everything animates from the main loop's tick() (no extra rAF loops).
 import { paintLayers, compose, STYLES } from './painter.js';
 const $ = (s, r = document) => r.querySelector(s), $$ = (s, r = document) => [...r.querySelectorAll(s)];
@@ -123,7 +123,7 @@ export function initModules(api) {
     const max = gal.scrollWidth - gal.clientWidth; const f = max > 0 ? gal.scrollLeft / max : 0; gbar.style.setProperty('--gx', (f * 233).toFixed(1) + '%');
   }
   const lb = $('#lb'), lbCv = $('#lbCv'), lbCap = $('#lbCap'); let lbFrom = null;
-  function openLB(i, from) { lbFrom = from; const [p, s] = WORKS[i]; const layers = paintLayers(lbCv.width, lbCv.height, p, s, 11); lbCap.textContent = `${p} · ${STYLES[s].name}（程序化生成示例）`;
+  function openLB(i, from) { lbFrom = from; const [p, s] = WORKS[i]; const layers = paintLayers(lbCv.width, lbCv.height, p, s, 11); lbCap.textContent = `${p} · ${STYLES[s].name}（程序化即时生成）`;
     lb.hidden = false; requestAnimationFrame(() => lb.classList.add('open')); api.lock(true); animate(1.4, k => compose(lbCv, layers, ease(k))); $('.lb-x', lb).focus(); }
   function closeLB() { if (lb.hidden) return; lb.classList.remove('open'); setTimeout(() => { lb.hidden = true; }, CAPTURE ? 0 : 400); api.lock(false); lbFrom && lbFrom.focus(); }
   $('.lb-x', lb).addEventListener('click', closeLB); lb.addEventListener('click', e => { if (e.target === lb) closeLB(); });
@@ -137,31 +137,10 @@ export function initModules(api) {
   $('.q-p').addEventListener('click', () => goQ(qi - 1)); $('.q-n').addEventListener('click', () => goQ(qi + 1)); goQ(0);
   const qw = $('.quotes'); qw.addEventListener('pointerenter', () => qHold = true); qw.addEventListener('pointerleave', () => qHold = false); qw.addEventListener('focusin', () => qHold = true); qw.addEventListener('focusout', () => qHold = false);
 
-  // ---------------- pricing toggle
-  const bill = $('.bill'), bb = $$('button', bill), bi = $('i', bill);
-  const moveBill = b => { bi.style.setProperty('--x', (b.offsetLeft - 4) + 'px'); bi.style.setProperty('--w', b.offsetWidth + 'px'); };
-  const prices = $$('.plan .price b');
-  bb.forEach(b => b.addEventListener('click', () => { bb.forEach(x => { x.classList.toggle('on', x === b); x.setAttribute('aria-pressed', x === b); }); moveBill(b);
-    const y = b.dataset.b === 'y'; prices.forEach(p => { const from = +p.textContent, to = +(y ? p.dataset.y : p.dataset.m); animate(.6, k => p.textContent = Math.round(from + (to - from) * ease(k))); }); amb().tick(); }));
-  const mb = M.measure; M.measure = () => { mb(); moveBill(bb.find(b => b.classList.contains('on'))); };
-
   // ---------------- FAQ accordion
   $$('.acc h4 button').forEach(b => b.addEventListener('click', () => { const p = $('#' + b.getAttribute('aria-controls')); const open = b.getAttribute('aria-expanded') !== 'true'; b.setAttribute('aria-expanded', open);
     if (open) { p.hidden = false; const h = p.scrollHeight; p.style.height = '0px'; animate(.45, k => p.style.height = (h * ease(k)) + 'px', () => p.style.height = ''); }
     else { const h = p.scrollHeight; animate(.35, k => p.style.height = (h * (1 - ease(k))) + 'px', () => { p.hidden = true; p.style.height = ''; }); } }));
-
-  // ---------------- waitlist form (front-end only)
-  const wl = $('#wl'), em = $('#em'), wbtn = $('button[type=submit]', wl), msg = $('#em-msg');
-  const RX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-  const vState = (show) => { const v = em.value.trim(); wbtn.disabled = !v || wl.classList.contains('done');
-    if (!v) { em.removeAttribute('aria-invalid'); msg.textContent = ''; msg.className = 'msg'; return false; }
-    if (!RX.test(v)) { if (show) { em.setAttribute('aria-invalid', 'true'); msg.textContent = '邮箱格式似乎不对，例如 name@example.com'; msg.className = 'msg err'; } return false; }
-    em.removeAttribute('aria-invalid'); msg.textContent = ''; msg.className = 'msg'; return true; };
-  em.addEventListener('input', () => vState(em.getAttribute('aria-invalid') === 'true')); em.addEventListener('blur', () => vState(true));
-  wl.addEventListener('submit', e => { e.preventDefault(); if (!vState(true)) { em.focus(); return; }
-    wbtn.classList.add('busy'); wbtn.disabled = true; msg.textContent = '提交中…'; msg.className = 'msg';
-    setTimeout(() => { wbtn.classList.remove('busy'); wl.classList.add('done'); $('.bt', wbtn).textContent = '已申请 ✓'; msg.textContent = '已加入候补名单。（演示：没有发送任何数据）'; msg.className = 'msg ok'; }, CAPTURE ? 0 : 1100); });
-  vState(false);
 
   // ---------------- reveal hooks + lazy work
   const lazy = new IntersectionObserver(es => es.forEach(e => { if (!e.isIntersecting) return; const t = e.target; lazy.unobserve(t);

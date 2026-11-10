@@ -21,11 +21,16 @@ float h21(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(
 // ---------- sky: paper, warm gradient, vermilion sun (screen-space, drawn first) ----------
 export const skyVert = /* glsl */`varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,.9999,1.);}`;
 export const skyFrag = NOISE + /* glsl */`
-uniform float uT,uAspect,uSun,uScroll;uniform vec3 uPaper,uPaper2,uSunC;varying vec2 vUv;
+uniform float uT,uAspect,uSun,uScroll,uNight;uniform vec3 uPaper,uPaper2,uSunC;varying vec2 vUv;
+const vec3 NGT=vec3(.035,.034,.038);const vec3 SLV=vec3(.86,.85,.81);const vec3 GLD=vec3(.93,.74,.4);
+
 void main(){vec2 uv=vUv;vec3 col=mix(uPaper,uPaper2,smoothstep(.15,1.,uv.y));
   vec2 sp=vec2(.84-uScroll*.5,.79-uScroll*.08);float d=length((uv-sp)*vec2(uAspect,1.))/max(.5,min(1.,uAspect/1.1));
   float sun=0.;if(d<.09)sun=smoothstep(.085,.08,d)*(.85+.15*snoise(vec3(uv*14.,1.)));
   col=mix(col,uSunC,sun*uSun);col=mix(col,uSunC,smoothstep(.35,.0,d)*.06*uSun);
+  if(uNight>0.){vec3 nc=mix(NGT,vec3(.075,.074,.082),smoothstep(.1,.9,uv.y));
+    nc+=GLD*smoothstep(.005,.0,abs(d-.083))*.85*uSun+GLD*exp(-d*d*30.)*.05;          // the sun becomes a gold-leaf ring
+    col=mix(col,nc,uNight);}
   gl_FragColor=vec4(col,1.);}`;
 
 // ---------- ink-wash mountain layer ----------
@@ -92,30 +97,113 @@ void main(){
 
 // ---------- water: sparse ink ripple strokes ----------
 export const waterFrag = NOISE + /* glsl */`
-uniform float uT,uFlow;uniform vec3 uPaper,uInkC;varying vec2 vUv;varying float vDist;varying vec3 vW;
-void main(){vec2 p=vW.xz;
-  float fade=smoothstep(42.,6.,vDist)*smoothstep(1.,4.,vDist);if(fade<.01)discard;
-  float lane=p.y*5.2+snoise(vec3(p.x*.12,p.y*.4,0.))*1.4;
-  float row=fract(lane);float id=floor(lane);
-  float dash=snoise(vec3(p.x*.35+uT*uFlow*(.6+h21(vec2(id,1.))*.6)+id*7.,id,1.));
-  float stroke=smoothstep(.12,.0,abs(row-.5)-.02)*smoothstep(.25,.55,dash);
-  gl_FragColor=vec4(uInkC,stroke*fade*.32);}`;
+// 水 — ink-painting water: tonal wash, drifting waterline mist, sparse tapering 水纹 strokes, the sun's broken red
+// reflection, pointer rings that part the reflection, and ink drops that bloom and diffuse. Reflections themselves are
+// the mirrored mountain layers drawn underneath (reflFrag); this layer composites over them.
+uniform float uT,uHz,uAsp,uSunA,uScroll,uNight;uniform vec3 uPaper0,uInkC0,uSunC0;
+const vec3 NGT=vec3(.035,.034,.038);const vec3 SLV=vec3(.86,.85,.81);const vec3 GLD=vec3(.93,.74,.4);
+vec3 uPaper,uInkC,uSunC;uniform vec2 uRes;uniform sampler2D uN;
+uniform vec4 uRings[8];uniform vec4 uBlots[4];varying vec2 vUv;varying float vDist;varying vec3 vW;
+vec4 acc=vec4(0.);void over(vec3 c,float a){a=clamp(a,0.,1.);acc.rgb=c*a+acc.rgb*(1.-a);acc.a=a+acc.a*(1.-a);}
+void main(){uPaper=mix(uPaper0,NGT,uNight);uInkC=mix(uInkC0,SLV*.85,uNight);uSunC=mix(uSunC0,GLD,uNight);vec2 p=vW.xz;float D=vDist;
+  float near=smoothstep(2.5,7.,D),far=smoothstep(70.,26.,D);if(near*far<.005)discard;
+  vec2 sc=gl_FragCoord.xy/uRes;
+  // pointer rings: expanding, thinning, decaying
+  float ring=0.,part=0.;
+  for(int i=0;i<8;i++){vec4 r=uRings[i];if(r.w<=0.)continue;float age=uT-r.z;if(age<0.||age>5.)continue;
+    float R=age*1.1+.05;float d=length((p-r.xy)*vec2(1.,1.));float x=d-R;float env=exp(-age*.75)*r.w;
+    ring+=(smoothstep(.07,.0,abs(x))*.9+smoothstep(.07,.0,abs(x+.28))*.45*smoothstep(.3,1.,age))*env;
+    part+=smoothstep(R,R*.2,d)*env*.5;}
+  // tonal wash: a soft ink gradation through the middle distance, breathing slowly
+  float n1=texture2D(uN,p*vec2(.012,.04)+vec2(uT*.002,0.)).r;
+  over(uInkC,(.06+.08*smoothstep(.35,.75,n1))*smoothstep(4.,14.,D)*smoothstep(55.,22.,D));
+  // waterline mist: pale paper haze over the far water, drifting sideways
+  float m=texture2D(uN,vec2(p.x*.018-uT*.004,p.y*.05)).a*.6+texture2D(uN,vec2(p.x*.045+uT*.006,p.y*.11+.3)).r*.4;
+  over(uPaper,smoothstep(.3,.75,m)*smoothstep(9.,22.,D)*.38+smoothstep(36.,64.,D)*.8);
+  // sun's reflection: a short shimmering red column just below the far shore, broken into slivers (artistically compressed
+  // toward the horizon so it never sits under the copy)
+  float sx=(sc.x-(.84-uScroll*.5))*uAsp/max(.5,min(1.,uAsp/1.1));float sy=uHz-sc.y;
+  float wob=(texture2D(uN,vec2(sc.y*6.,uT*.03)).r-.5)*.02;
+  float colw=.055*(1.-smoothstep(0.,.3,sy)*.55);
+  float col=smoothstep(colw,colw*.2,abs(sx+wob))*smoothstep(-.005,.02,sy)*smoothstep(uAsp<1.?.17:.3,.04,sy);
+  float brk=smoothstep(.38,.62,texture2D(uN,vec2(p.x*.05+uT*.003,p.y*1.3)).g);
+  over(uSunC,col*brk*.5*uSunA);
+  float gl=step(.93,texture2D(uN,vec2(p.x*.3+uT*.02,p.y*2.1)).b)*col;over(mix(uSunC,vec3(1.,.95,.86),.75),gl*.6*uSunA);
+  // pointer disturbance clears the reflection where the surface is broken
+  over(uPaper,min(part,.6));
+  // 水纹: sparse groups of 2–3 nested, arched, tapering brush strokes; widths in screen pixels so perspective
+  // compresses spacing (not the brush), giving the classical receding pattern
+  float lane=p.y*.9+texture2D(uN,p*vec2(.01,.03)).r*.8;float id=floor(lane),fr=fract(lane);float fw=max(fwidth(lane),1e-4);
+  float on=step(.38,h21(vec2(id,3.)));
+  float L=1.8+h21(vec2(id,5.))*2.6;float per=L*2.3;float xs=p.x+uT*(.06+h21(vec2(id,7.))*.1)+id*13.7;float seg=floor(xs/per);
+  float s0=fract(xs/per)*per/L;float segOn=step(.3,h21(vec2(id,seg)));float stc=0.;
+  for(int k=0;k<3;k++){float fk=float(k);float s=(s0-fk*.12)/(1.-fk*.3);if(s<0.||s>1.)continue;if(fk>.5&&h21(vec2(seg,id+fk))<.45)continue;
+    float tp=pow(sin(s*3.14159),1.3);float arc=sin(s*3.14159)*.16*(1.-fk*.25);
+    float y=(fr-.42)/fw-arc/.16*4.5+fk*5.;float w=(.45+1.5*tp)*(1.-fk*.25);
+    stc=max(stc,smoothstep(w,w*.3,abs(y))*tp);}
+  float st=stc*on*segOn*(.6+.4*smoothstep(.3,.6,texture2D(uN,vec2(p.x*.9,p.y*2.)).r));
+  over(uInkC,st*.5*smoothstep(4.,8.,D)*smoothstep(46.,18.,D));
+  // ring strokes
+  over(uInkC,min(ring,1.)*.38);
+  // ink drops: a dense core that sinks and fades, feathered tendrils that wander outward, a pale halo of diffused ink
+  for(int i=0;i<4;i++){vec4 b=uBlots[i];if(b.w<=0.)continue;float age=uT-b.z;if(age<0.||age>28.)continue;
+    vec2 d=p-b.xy;float r=length(d);
+    float R=b.w*(.18+1.5*(1.-exp(-age*.45)));
+    vec2 dir=d/max(r,1e-3);float ten=texture2D(uN,dir*.55+vec2(r*.5/b.w-age*.03,b.x*.1)).r*.7+texture2D(uN,dir*1.6+vec2(b.y*.1,r*1.6/b.w)).g*.3;
+    float edge=R*(.55+.75*ten);
+    float dens=smoothstep(edge,edge*.25,r);float fil=smoothstep(.55,.8,ten)*smoothstep(edge*1.35,edge*.6,r);
+    float core=smoothstep(R*.4,0.,r)*exp(-age*.3);float life=1.-smoothstep(14.,28.,age);
+    float rim=smoothstep(edge*.72,edge*.95,r)*smoothstep(edge*1.06,edge*.95,r);
+    over(uInkC,(dens*(.14+.2*exp(-age*.15))+fil*.22+rim*.2+core*.45)*life);}
+  float A=acc.a*near*far;if(A<.003)discard;gl_FragColor=vec4(acc.rgb/max(acc.a,1e-4),A);}`;
+// mirrored mountain layer seen in the water: blurred (mip bias), wobbled by ripples, broken into slivers, fading with depth
+export const reflFrag = /* glsl */`uniform sampler2D map,uN;uniform float uFlip,uWL,uT,uLift,uNight;
+const vec3 NGT=vec3(.035,.034,.038);const vec3 SLV=vec3(.86,.85,.81);const vec3 GLD=vec3(.93,.74,.4);
+uniform vec3 uPaper;varying vec2 vUv;varying float vDist;varying vec3 vW;
+void main(){float dep=uWL-vW.y;if(dep<0.)discard;
+  float w=texture2D(uN,vec2(vW.x*.05+uT*.012,dep*.35+vW.z*.01)).r-.5;
+  float u=mix(vUv.x,1.-vUv.x,uFlip)+w*(.004+dep*.004);
+  vec4 c=texture2D(map,vec2(u,vUv.y+uLift),min(1.+dep*.8,3.5));   // lifted past the mist-faded foot so the hill body mirrors at the shore
+  float sl=texture2D(uN,vec2(vW.x*.015+uT*.004,dep*1.6)).g;
+  float a=c.a*(exp(-dep*.42)*.8+smoothstep(.35,.0,dep)*.18)*(.55+.45*smoothstep(.25,.6,sl))*smoothstep(1.2,5.,vDist);if(a<.004)discard;
+  vec3 cc=mix(uPaper,c.rgb,.85);if(uNight>0.){vec2 e=2./vec2(textureSize(map,0));float ga=abs(texture2D(map,vec2(u,vUv.y+uLift)+vec2(0.,e.y),2.).a-texture2D(map,vec2(u,vUv.y+uLift)-vec2(0.,e.y),2.).a);cc=mix(cc,mix(vec3(.06,.06,.065),SLV*.7,smoothstep(.03,.2,ga)),uNight);}gl_FragColor=vec4(cc,a);}`;
+// tiny fishing boat (渔舟) + its own wobbling reflection, drawn procedurally on one quad
+export const boatFrag = /* glsl */`uniform float uT,uRefl,uNight;uniform vec3 uInkC;uniform sampler2D uN;varying vec2 vUv;
+float seg(vec2 p,vec2 a,vec2 b,float r){vec2 pa=p-a,ba=b-a;float h=clamp(dot(pa,ba)/dot(ba,ba),0.,1.);return length(pa-ba*h)-r;}
+void main(){vec2 q=vUv;float bob=sin(uT*.9)*.006;
+  if(uRefl>.5)q.x+=(texture2D(uN,vec2(q.y*2.+uT*.04,.37)).r-.5)*.05*q.y;
+  vec2 p=vec2((q.x-.5)*1.4,q.y*.5-bob);float ax=abs(p.x)/.56;
+  float bot=pow(ax,2.6)*.075,top=.055+pow(ax,4.)*.05;
+  float hull=max(ax-1.,max(bot-p.y,p.y-top));
+  float man=seg(p,vec2(.13,.07),vec2(.11,.19),.032);
+  float hat=max(p.y-.265,max(.205-p.y,abs(p.x-.115)-(.265-p.y)*1.9));
+  float pole=seg(p,vec2(.05,.15),vec2(-.52,.44),.0055);
+  float d=min(min(hull,man),min(hat,pole));
+  float a=smoothstep(.008,-.004,d);
+  if(uRefl>.5)a*=.3*smoothstep(.75,.0,q.y)*(.55+.45*step(.45,texture2D(uN,vec2(q.x*.4+uT*.01,q.y*7.)).g));
+  if(a<.01)discard;gl_FragColor=vec4(mix(uInkC,vec3(.86,.85,.81),uNight),a*.88);}`;
 
 // ---------- baking: render a layer's procedural ink once into a texture ----------
 export const bakeVert = /* glsl */`uniform vec3 uOrigin;uniform vec2 uSize;uniform float uDist;varying vec2 vUv;varying float vDist;varying vec3 vW;
 void main(){vUv=uv;vW=uOrigin+vec3(uv.x*uSize.x,uv.y*uSize.y,0.);vDist=uDist;gl_Position=vec4(uv*2.-1.,0.,1.);}`;
 // runtime: just a texture fetch (+ near fade). Cheap enough for 100+ overlapping layers.
-export const inkTexFrag = /* glsl */`uniform sampler2D map;uniform float uFlip,uFade;varying vec2 vUv;varying float vDist;
-void main(){vec4 c=texture2D(map,vec2(mix(vUv.x,1.-vUv.x,uFlip),vUv.y));float a=c.a*smoothstep(1.2,5.,vDist)*uFade;if(a<.004)discard;gl_FragColor=vec4(c.rgb,a);}`;
+export const inkTexFrag = /* glsl */`uniform sampler2D map;uniform float uFlip,uFade,uWL,uNight;varying vec2 vUv;varying float vDist;varying vec3 vW;
+const vec3 NGT=vec3(.035,.034,.038);const vec3 SLV=vec3(.86,.85,.81);const vec3 GLD=vec3(.93,.74,.4);
+vec3 nightInk(sampler2D m,vec2 u,vec4 c,float far){vec2 e=1.6/vec2(textureSize(m,0));
+  vec4 l=texture2D(m,u-vec2(e.x,0.)),r=texture2D(m,u+vec2(e.x,0.)),b=texture2D(m,u-vec2(0.,e.y)),t=texture2D(m,u+vec2(0.,e.y));
+  float ga=length(vec2(r.a-l.a,t.a-b.a)),gl=length(vec2(dot(r.rgb-l.rgb,vec3(.33)),dot(t.rgb-b.rgb,vec3(.33))));
+  float line=smoothstep(.06,.3,ga)+smoothstep(.05,.2,gl)*.35;
+  vec3 fill=mix(vec3(.05,.05,.055),vec3(.1,.105,.12),far);return mix(fill,SLV*mix(1.,.5,far),clamp(line,0.,1.));}
+void main(){vec2 tu=vec2(mix(vUv.x,1.-vUv.x,uFlip),vUv.y);vec4 c=texture2D(map,tu);float a=c.a*smoothstep(1.2,5.,vDist)*uFade*smoothstep(uWL-.05,uWL+.08,vW.y);if(a<.004)discard;vec3 cc=c.rgb;if(uNight>0.)cc=mix(cc,nightInk(map,tu,c,smoothstep(10.,90.,vDist)),uNight);gl_FragColor=vec4(cc,a);}`;
 // tileable mist (noise sampled on a cylinder so it wraps in x)
 export const mistBakeFrag = NOISE + /* glsl */`varying vec2 vUv;
 void main(){float a=vUv.x*6.28318;vec3 p=vec3(cos(a)*1.3,sin(a)*1.3,vUv.y*1.7);
   float n=snoise(p)*.6+snoise(p*2.3+4.)*.3+snoise(p*5.1+9.)*.1;
   gl_FragColor=vec4(1.,1.,1.,clamp(n*.5+.5,0.,1.));}`;
-export const mistTexFrag = /* glsl */`uniform sampler2D map;uniform float uT,uSeed,uA;uniform vec3 uPaper;varying vec2 vUv;varying float vDist;
+export const mistTexFrag = /* glsl */`uniform sampler2D map;uniform float uT,uSeed,uA,uNight;uniform vec3 uPaper;varying vec2 vUv;varying float vDist;
 void main(){float n=texture2D(map,vec2(vUv.x*1.6+uT*.004+uSeed,vUv.y)).a;float n2=texture2D(map,vec2(vUv.x*2.7-uT*.006+uSeed*1.7,vUv.y*.8+.1)).a;
   float band=smoothstep(.0,.35,vUv.y)*smoothstep(1.,.45,vUv.y);float edge=smoothstep(0.,.18,vUv.x)*smoothstep(1.,.82,vUv.x);
-  float a=clamp((n*.65+n2*.35)*1.25-.2,0.,1.)*band*edge*uA*smoothstep(1.,6.,vDist);if(a<.004)discard;gl_FragColor=vec4(uPaper,a);}`;
+  float a=clamp((n*.65+n2*.35)*1.25-.2,0.,1.)*band*edge*uA*smoothstep(1.,6.,vDist);if(a<.004)discard;gl_FragColor=vec4(mix(uPaper,vec3(.13,.135,.15),uNight),a*mix(1.,.55,uNight));}`;
 
 // ---------- drifting mist (unused fallback) ----------
 export const mistFrag = NOISE + /* glsl */`

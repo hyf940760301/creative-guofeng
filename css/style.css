@@ -208,7 +208,16 @@ input[type=range]::-moz-range-track{height:2px;background:rgba(27,24,20,.2)}inpu
 input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:3px;background:var(--seal);border:2px solid var(--paper3)}
 
 /* ---------- hero ---------- */
-.ch-hero{height:100vh;height:100svh;display:flex;align-items:center;justify-content:center}
+.ch-hero{height:200vh;height:200svh;padding:0}
+.hero-pin{position:sticky;top:0;height:100vh;height:100svh;display:flex;align-items:center;justify-content:center;padding:0 var(--gut)}
+.op-fade{position:absolute;inset:0;pointer-events:none}.op-en,.op-cue span{text-shadow:0 0 10px rgba(241,236,225,.95),0 0 3px rgba(241,236,225,.9)}.op-fade>*{pointer-events:auto}
+.op-title{transform-origin:0 0;will-change:transform}
+.ch-hero.dark .op-en,.ch-hero.dark .op-cue{color:var(--moondim)}.ch-hero.dark .op-cue i{background:linear-gradient(var(--moon),transparent)}
+.ch-vision.dark .halo:before{background:radial-gradient(closest-side,rgba(10,10,12,.78),rgba(10,10,12,.5) 55%,rgba(10,10,12,0))}
+.ch-vision.dark .stats div{border-color:var(--line-d)}.ch-vision.dark .stats dt,.ch-vision.dark .stats span{color:var(--moondim)}
+.ch-vision.dark .vision-v{color:#ece6d6;text-shadow:0 0 24px rgba(0,0,0,.6)}
+.brand .b-seal.pulse{animation:sealp .9s var(--ease)}@keyframes sealp{0%{transform:scale(1)}35%{transform:scale(1.22);box-shadow:0 0 0 6px rgba(178,52,34,.25)}100%{transform:scale(1)}}
+.seals a.lit .st{animation:sealp .9s var(--ease)}
 .hero-wrap{display:flex;align-items:flex-start;gap:3vw}
 .op-title{font-family:var(--serif);font-weight:700;font-size:var(--fs-d);letter-spacing:.18em;line-height:1;white-space:nowrap}
 .op-side{display:flex;flex-direction:column;gap:18px;align-items:center;padding-top:.4em}
@@ -258,6 +267,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:3px;bac
 
 /* ---------- features ---------- */
 .ch-feat{min-height:180vh;padding-bottom:var(--s9)}
+.vista{height:115vh;height:115svh;pointer-events:none}
 .feat{margin-top:var(--s7);padding:var(--s3) var(--s6) var(--s6);max-width:1180px}
 .tabs{position:relative;display:flex;gap:var(--s1);border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
@@ -375,7 +385,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:3px;bac
 .lb-x{position:absolute;top:20px;right:24px;width:48px;height:48px;border-radius:50%;color:var(--moon);font-size:28px;border:1px solid var(--line-d);transition:background var(--t2)}.lb-x:hover{background:rgba(255,255,255,.08)}
 
 /* ---------- pricing / faq ---------- */
-.ch-price{min-height:200vh;padding-bottom:var(--s9)}
+.ch-price{min-height:0;padding-bottom:var(--s9)}
 .bill{position:relative;display:inline-flex;margin-top:var(--s6);padding:4px;border-radius:30px;background:rgba(27,24,20,.07)}
 .bill button{position:relative;z-index:1;height:38px;padding:0 22px;border-radius:24px;font-family:var(--serif);font-size:var(--fs-sm);letter-spacing:.16em;color:var(--ink2);transition:color var(--t2)}
 .bill button.on{color:var(--paper3)}.bill em{font-style:normal;font-size:11px;color:var(--seal);letter-spacing:.05em;margin-left:4px}.bill button.on em{color:#f3b7a6}
@@ -443,7 +453,7 @@ input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:3px;bac
   .op-en{left:22px;right:22px;bottom:12vh;font-size:13px;text-align:center}.op-cue{right:50%;transform:translateX(50%);bottom:4vh}
   .ch-vision{flex-direction:column;justify-content:center;gap:28px;padding-top:20vh;min-height:auto;padding-bottom:30vh}
   .vision-v{writing-mode:horizontal-tb;height:auto;font-size:40px;letter-spacing:.12em}
-  .ch-vision .blk{padding:20px 0;background:rgba(241,236,225,.8)}
+  .ch-vision .blk{padding:20px 0;background:rgba(241,236,225,.8)}.ch-vision.dark .blk{background:rgba(12,12,14,.72)}
   .play{padding:18px;gap:20px}.prompt-row{flex-direction:column}.prompt-row .btn{width:100%}
   .feat{padding:6px 16px 20px}.tabs button{font-size:15px;padding:14px 10px 12px}
   .ch-vessel{min-height:180vh;align-items:flex-end}.ch-vessel .blk{position:relative;top:auto;margin-top:110vh;padding:22px;border-radius:var(--r2);background:rgba(20,18,15,.72);backdrop-filter:blur(8px)}
@@ -469,3 +479,20 @@ h2.t{text-wrap:balance}
 .blk h2.t{font-size:clamp(34px,3.5vw,60px)}
 .ch-vessel .blk{max-width:520px}
 [data-split] .nw{white-space:nowrap}
+/* ---------- art edition: verse, colophon, scene index, signature ---------- */
+.verse{margin-top:var(--s6);font-family:var(--kai,var(--serif));font-size:clamp(18px,1.5vw,22px);line-height:2.1;letter-spacing:.3em;color:var(--ink2)}
+.ch-vision.dark .verse{color:var(--moon2)}
+.colo{display:grid;grid-template-columns:1.25fr 1fr;gap:var(--s6);max-width:min(940px,57vw);margin-top:var(--s7)}
+.colo-t{padding:var(--s6)}.colo-t .body+.body{margin-top:var(--s4)}
+.colo .sig{margin-top:var(--s5);text-align:right;font-family:var(--kai,var(--serif));letter-spacing:.3em;color:var(--dim)}
+.idx{padding:var(--s6)}.idx ol{list-style:none;margin-top:var(--s4)}
+.idx a{display:flex;justify-content:space-between;gap:var(--s3);padding:9px 2px;border-bottom:1px solid var(--line);transition:color var(--t2)}
+.idx a b{font-family:var(--serif);font-weight:600;letter-spacing:.24em}.idx a span{font-size:var(--fs-sm);color:var(--dim)}.idx a:hover{color:var(--seal)}
+.ch-price .faq{max-width:min(940px,57vw)}
+.end-sign{max-width:1180px;margin:0 auto;width:100%;display:flex;flex-direction:column;align-items:center;text-align:center;gap:var(--s4);padding-top:var(--s7)}
+.end-sign .body{color:var(--dim);letter-spacing:.3em}
+.mark{display:flex;align-items:flex-start;gap:14px;margin-top:var(--s6)}
+.mark-t{font-family:var(--kai,var(--serif));font-size:20px;letter-spacing:.35em;color:var(--ink2)}
+.mark-s{width:54px;height:54px;display:grid;place-items:center;background:var(--seal);color:#f7efe2;font-family:var(--kai,var(--serif));font-size:19px;line-height:1.05;writing-mode:vertical-rl;border-radius:3px;transform:rotate(-2deg);box-shadow:inset 0 0 0 2px rgba(255,240,220,.35)}
+.foot{grid-template-columns:1fr}
+@media (max-width:900px){.colo{grid-template-columns:1fr;max-width:100%}.ch-price .faq{max-width:100%}}

@@ -69,7 +69,7 @@ const TRANS_C = { 1: [.66, .6], 3: [.5, .62], 7: [.7, .56] }; // drop lands righ
 // ------------------------------------------------------------ layout / scroll mapping
 let VW = innerWidth, VH = innerHeight, maxS = 1, footTop = 1e9, flow = null;
 const secTop = new Map();
-function measure() {
+function measure() { OP.base = null;
   VW = innerWidth; VH = innerHeight; const sy = scrollY_;
   sections.forEach(s => { const r = s.getBoundingClientRect(); secTop.set(s, [r.top + sy, r.height]); });
   groups.forEach(g => { const a = secTop.get(g.secs[0]), b = secTop.get(g.secs[g.secs.length - 1]); g.T = a[0]; g.B = b[0] + b[1]; g.start = Math.max(0, g.T - VH); });
@@ -97,7 +97,7 @@ if (!CAPTURE) { lenis = new Lenis({ lerp: REDUCED ? 1 : .085, smoothWheel: !REDU
 addEventListener('scroll', () => { if (!lenis) scrollY_ = scrollY; }, { passive: true });
 
 const ptr = { cx: VW / 2, cy: VH / 2, x: 0, y: 0, sx: 0, sy: 0, in: false, moved: false, down: false };
-const st = { t: 0, dt: 1 / 60, p: 0, intro: CAPTURE ? 1 : 0, k: (REDUCED || CAPTURE) ? 1e4 : 6.5, snap: false, capture: CAPTURE, rtW: 1, rtH: 1,
+const st = { open: 0, t: 0, dt: 1 / 60, p: 0, intro: CAPTURE ? 1 : 0, k: (REDUCED || CAPTURE) ? 1e4 : 6.5, snap: false, capture: CAPTURE, rtW: 1, rtH: 1,
   ptr: new THREE.Vector2(), ptrScreen: new THREE.Vector2(.5, .5), pointerIn: false };
 const setPtr = (x, y) => { ptr.cx = x; ptr.cy = y; ptr.x = x / VW * 2 - 1; ptr.y = -(y / VH * 2 - 1); ptr.in = true; ptr.moved = true; };
 
@@ -115,10 +115,10 @@ const pOf = g => { const G = groups[g]; return clamp((scrollY_ - G.start) / Math
 // ------------------------------------------------------------ click → ink drop
 let dropI = 0;
 function inkDrop(x, y) {
-  const u = x / VW, v = 1 - y / VH; const d = CU.uDrops.value[dropI++ % 6]; d.set(u, v, st.t, .045 + Math.random() * .03);
-  const sA = SC[groups[state.A].id]; if (sA && sA.click) sA.click(u, v); amb.plop();
+  const u = x / VW, v = 1 - y / VH; const sA = SC[groups[state.A].id]; const own = sA && sA.click ? sA.click(u, v) === true : false;
+  if (!own) CU.uDrops.value[dropI++ % 6].set(u, v, st.t, .045 + Math.random() * .03); amb.plop(); // a scene that renders its own drop (hero water) skips the screen blot
 }
-const INTERACTIVE = 'a,button,input,label,select,textarea,[role=tab],[role=radio],.panel,.gal,.vessel-hit,.lb,.mmenu,.top,.seals,.q-viewport,.plan,.faq,.road,.foot,.ba';
+const INTERACTIVE = 'a,button,input,label,select,textarea,[role=tab],[role=radio],.panel,.gal,.vessel-hit,.lb,.mmenu,.top,.seals,.q-viewport,.faq,.idx,.foot,.ba';
 
 // ------------------------------------------------------------ cursor (topmost layer; context morphs)
 const cur = $('.cur'), cDot = $('.cur .dot'), cRing = $('.cur .ring'), cLab = $('.cur .lab');
@@ -172,18 +172,34 @@ sections.forEach(s => { const a = document.createElement('a'); a.href = '#' + s.
 const sealA = $$('a', seals), menuA = $$('.menu a');
 const cache = { fadeSec: null, fo: -1, fadeIn: null, fiv: -1, veil: -1, dk: -1, mk: -1, bar: -1, sec: -1, darkBody: null, pinX: -1, foot: null };
 // header-safe zone: text that scrolls (or un-pins) up toward the fixed header dissolves just before it, never sits under it
-const SAFE = $$('main h1, main .kicker, main h2, main h3, main .sec-h > p, main .blk > p'); let hdrB = 72;
+const SAFE = $$('main h1:not(.op-title), main .kicker, main h2, main h3, main .sec-h > p, main .blk > p'); let hdrB = 72;
+$$('main .panel:not(.step)').forEach(e => { e._fl = 120; SAFE.push(e); });   // big cards dissolve over a longer band as they leave under the header
 const safeFX = () => { const n = SAFE.length, tops = new Array(n), bots = new Array(n);
   for (let i = 0; i < n; i++) { const r = SAFE[i].getBoundingClientRect(); tops[i] = r.top; bots[i] = r.bottom; }   // all reads first
   for (let i = 0; i < n; i++) { const e = SAFE[i]; const X = hdrB - tops[i]; let v = '';
-    if (bots[i] > -10 && X > -44) { const a = Math.round(X - 6), b = Math.round(X + 38); v = `linear-gradient(180deg,transparent ${a}px,#000 ${b}px)`; }
+    if (bots[i] > -10 && X > -44) { const a = Math.round(X - 6), b = Math.round(X + (SAFE[i]._fl || 38)); v = `linear-gradient(180deg,transparent ${a}px,#000 ${b}px)`; }
     if (v !== e._m) { e._m = v; e.style.webkitMaskImage = v; e.style.maskImage = v; } } };
+// 破墨入卷: the hero title flies up-left and becomes the 墨 seal; the chapter-1 seal lights when the night scroll opens
+const opT = $('.op-title'), opSide = $('.op-side'), opFade = $('.op-fade'), heroEl = $('#hero'), visEl = $('#vision'), bSeal = $('.top .b-seal');
+const OP = { o: -1, base: null, night: -1, pulsed: false, lit: false };
+function opMeasure() { const tr = opT.style.transform; opT.style.transform = 'none'; const r = opT.getBoundingClientRect(), b = bSeal.getBoundingClientRect(), pt = opT.closest('.hero-pin').getBoundingClientRect().top; opT.style.transform = tr;
+  OP.base = { x: r.left, y: r.top - pt, h: r.height, w: r.width, bx: b.left, by: b.top, bh: b.height }; OP.o = -1; }
+function openFX(o) { if (!OP.base) opMeasure(); if (Math.abs(o - OP.o) < 1e-4 && !CAPTURE) return; OP.o = o; const B_ = OP.base;
+  const f = sstep(0, .3, o), e = f * f * (3 - 2 * f), sc = Math.exp(lerp(0, Math.log(B_.bh * 1.6 / B_.w), e)), arc = Math.sin(f * Math.PI) * -B_.h * .3;
+  // the title's centre lands on the 墨 seal's centre as it shrinks to seal width, then sinks into it
+  const tx = (B_.bx + B_.bh / 2 - B_.w * sc / 2 - B_.x) * e, ty = (B_.by + B_.bh / 2 - B_.h * sc / 2 - B_.y) * e + arc;
+  opT.style.transform = o < 1e-4 ? '' : `translate3d(${tx.toFixed(1)}px,${ty.toFixed(1)}px,0) scale(${sc.toFixed(4)})`;
+  opT.style.opacity = o < 1e-4 ? '' : (1 - sstep(.21, .3, o)).toFixed(3);
+  const fo = 1 - sstep(0, .15, o); opSide.style.opacity = fo > .999 ? '' : fo.toFixed(3); opFade.style.opacity = fo > .999 ? '' : fo.toFixed(3); opFade.style.visibility = fo < .002 ? 'hidden' : '';
+  const pz = o > .28; if (pz !== OP.pulsed) { OP.pulsed = pz; if (pz) { bSeal.classList.remove('pulse'); void bSeal.offsetWidth; bSeal.classList.add('pulse'); } }
+  const nd = o >= .62; if (nd !== OP.night) { OP.night = nd; heroEl.classList.toggle('dark', nd); visEl.classList.toggle('dark', nd); } }
 function chrome() {
   const s = scrollY_; if (CAPTURE) for (const k in cache) if (k !== 'darkBody' && k !== 'fadeSec' && k !== 'fadeIn') cache[k] = -1e9; // capture: always write (history-free DOM)
   safeFX();
   // when the theme flips (dark ↔ paper), the outgoing chapter's copy yields to the transition instead of sitting on a fresh stroke
   { const gA = groups[state.A], gB = state.B >= 0 ? groups[state.B] : null; let fs = null, fo = 1;
-    if (gB && SC[gA.id].dark !== SC[gB.id].dark) { fs = gA.secs[gA.secs.length - 1]; fo = gB.trans === 6 ? 1 - sstep(.0, .14, state.tp) : 1 - sstep(.28, .55, state.tp); } // tear: cards clear before the paper splits
+    if (gB && gB.trans === TRANS.fog && SC[gA.id].dark === SC[gB.id].dark) { fs = gA.secs[gA.secs.length - 1]; fo = 1 - sstep(.0, .3, state.tp); }   // the fog swallows the outgoing chapter's cards
+    else if (gB && SC[gA.id].dark !== SC[gB.id].dark) { fs = gA.secs[gA.secs.length - 1]; fo = gB.trans === 6 ? 1 - sstep(.0, .14, state.tp) : gB.trans === 1 ? 1 - sstep(.04, .3, state.tp) : 1 - sstep(.28, .55, state.tp); }   // 清水: the night copy washes away with the ink // tear: cards clear before the paper splits
     if (fs !== cache.fadeSec) { if (cache.fadeSec && cache.fadeSec.style) cache.fadeSec.style.opacity = ''; cache.fadeSec = fs; cache.fo = -1; }
     if (fs && Math.abs(fo - cache.fo) > .003) { cache.fo = fo; fs.style.opacity = fo > .997 ? '' : fo.toFixed(3); }
     let fi = null, fv = 1; if (gB && SC[gA.id].dark !== SC[gB.id].dark) { fi = gB.secs[0]; fv = gB.trans === 3 ? sstep(.66, .9, state.tp) : sstep(.45, .75, state.tp); }
@@ -196,8 +212,9 @@ function chrome() {
   if (Math.abs(mkv - cache.mk) > .002) { cache.mk = mkv; mT.style.transform = `translate3d(0,${(-mkv * 105).toFixed(2)}%,0)`; mB.style.transform = `translate3d(0,${(mkv * 105).toFixed(2)}%,0)`; }
   const b = s / maxS; if (Math.abs(b - cache.bar) > .001) { cache.bar = b; barI.style.transform = `scaleX(${b.toFixed(4)})`; }
   let si = 0; for (let i = 0; i < sections.length; i++) if (secTop.get(sections[i])[0] - VH * .45 <= s) si = i;
+  if (si === 0 && st.open > .88) si = 1; const lit = si === 1 && st.open > .88 && st.open < 1.2; if (lit !== OP.lit) { OP.lit = lit; if (lit && sealA[1]) { sealA[1].classList.remove('lit'); void sealA[1].offsetWidth; sealA[1].classList.add('lit'); } }
   if (si !== cache.sec) { cache.sec = si; sealA.forEach((a, i) => a.classList.toggle('on', i === si)); const id = sections[si].id;
-    menuA.forEach(a => { const on = a.getAttribute('href') === '#' + id || (id === 'pricing' && a.getAttribute('href') === '#pricing'); a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'); }); }
+    menuA.forEach(a => { const on = a.getAttribute('href') === '#' + id || false; a.classList.toggle('on', on); on ? a.setAttribute('aria-current', 'true') : a.removeAttribute('aria-current'); }); }
   if (flow && VW > 760) { const lp = clamp((s - flow.T) / Math.max(1, flow.H - VH)); const x = -lp * flow.w;
     if (Math.abs(x - cache.pinX) > .2) { cache.pinX = x; flow.track.style.transform = `translate3d(${x.toFixed(1)}px,0,0)`; } mods.flowProgress(lp); }
 }
@@ -208,7 +225,7 @@ function frame(dt, draw = true) {
   st.t += REDUCED ? dt * .4 : dt; st.dt = dt;
   // pointer smoothing (scenes get a calm, damped pointer)
   st.ptr.set(damp(st.ptr.x, ptr.x, 4, dt), damp(st.ptr.y, ptr.y, 4, dt)); st.ptrScreen.set(ptr.cx / VW, 1 - ptr.cy / VH); st.pointerIn = ptr.in && !CAPTURE;
-  resolve(scrollY_);
+  resolve(scrollY_); st.open = clamp(scrollY_ / VH); openFX(st.open);
   const A = state.A, B = state.B, tp = state.tp;
   const gA = groups[A], sA = SC[gA.id];
   const gB = B >= 0 ? groups[B] : null, sB = gB ? SC[gB.id] : null;
@@ -220,10 +237,14 @@ function frame(dt, draw = true) {
   for (const sc of want) { st.snap = first || !visible.has(sc) || CAPTURE && false; const gi = sc === sA ? A : B; st.p = pOf(gi); st.span = Math.max(1, groups[gi].B - VH - groups[gi].start); sc.update(st); }
   visible.clear(); want.forEach(s => visible.add(s)); first = false; const _t1 = BENCH ? performance.now() : 0;
   if (!draw) return;
-  renderer.setRenderTarget(rtA); renderer.setClearColor(sA.dark ? 0x14120f : C.paper, 1); renderer.clear(); renderer.render(sA.scene, sA.camera);
+  const OPEN = sA.setNight && !sB && st.open > .22 && st.open < .9;   // 破墨入卷 match-cut: ink-on-paper in A, night-ink version of the same frame in B
+  if (sA.setNight) sA.setNight(OPEN ? 0 : sstep(.88, .9, st.open));
+  renderer.setRenderTarget(rtA); renderer.setClearColor(sA.dark && !OPEN ? 0x14120f : C.paper, 1); renderer.clear(); renderer.render(sA.scene, sA.camera);
+  if (OPEN) { sA.setNight(1); renderer.setRenderTarget(rtB); renderer.setClearColor(0x0a0a0c, 1); renderer.clear(); renderer.render(sA.scene, sA.camera); }
   if (sB && sB !== sA) { renderer.setRenderTarget(rtB); renderer.setClearColor(sB.dark ? 0x14120f : C.paper, 1); renderer.clear(); renderer.render(sB.scene, sB.camera); }
-  CU.tA.value = rtA.texture; CU.tB.value = sB ? rtB.texture : rtA.texture; CU.uP.value = sB ? ease : 0;
-  CU.uType.value = sB ? (REDUCED ? 0 : gB.trans) : 0; CU.uT.value = st.t; const cc = TRANS_C[gB ? gB.trans : 0]; CU.uC.value.set(cc ? cc[0] : .5, cc ? cc[1] : .5); if (sB && sB.anchor && gB.trans === 7) { const an = sB.anchor(VW / VH); CU.uC.value.set(an[0], an[1]); CU.uHS.value.set(an[2], an[3]); }
+  CU.tA.value = rtA.texture; CU.tB.value = sB || OPEN ? rtB.texture : rtA.texture; CU.uP.value = sB ? ease : OPEN ? (REDUCED ? sstep(.3, .88, st.open) : st.open) : 0;
+  CU.uType.value = sB ? (REDUCED ? 0 : gB.trans) : OPEN ? (REDUCED ? 0 : 8) : 0; CU.uT.value = st.t; const cc = TRANS_C[gB ? gB.trans : 0]; CU.uC.value.set(cc ? cc[0] : .5, cc ? cc[1] : .5); if (sB && sB.anchor && gB.trans === 7) { const an = sB.anchor(VW / VH); CU.uC.value.set(an[0], an[1]); CU.uHS.value.set(an[2], an[3]); }
+  if (OPEN) CU.uC.value.set(.5, VW < VH ? .47 : .44);
   CU.uDropCol.value.copy(state.dark > .5 ? C.seal : C.ink);
   fsQuad.material = comp;
   if (USE_FXAA) { renderer.setRenderTarget(rtC); renderer.render(fsScene, fsCam); fxaa.uniforms.tDiffuse.value = rtC.texture; fsQuad.material = fxaa; }
@@ -337,7 +358,7 @@ function intro() {
 function captureMode() {
   $('#loader').remove(); ['.top', '.seals', '.scrollbar', '.op-en', '.op-cue', '.op-seal', '.op-sub'].forEach(s => $$(s).forEach(e => e.style.opacity = 1));
   $$('[data-split],[data-reveal]').forEach(e => e.classList.add('in')); mods.finalize && mods.finalize();
-  window.__capture = true;
+  window.__capture = true; window.__SC = SC;
   window.__setScroll = p => { measure(); window.scrollTo(0, clamp(p) * maxS); scrollY_ = scrollY; return scrollY_; };
   window.__setScrollY = y => { window.scrollTo(0, y); scrollY_ = scrollY; return scrollY_; };
   window.__setPointer = (x, y) => setPtr(x, y);

@@ -2,7 +2,7 @@
 // scroll-scrubbed transitions, plus click-drops of ink, paper grain and vignette. All transitions are
 // pure functions of progress p ∈ [0,1], so scrubbing forward/backward is continuous and interruptible.
 import { NOISE } from './shaders.js';
-export const TRANS = { none: 0, drop: 1, fog: 2, dive: 3, brush: 4, unroll: 5, tear: 6, stamp: 7 };
+export const TRANS = { none: 0, drop: 1, fog: 2, dive: 3, brush: 4, unroll: 5, tear: 6, stamp: 7, open: 8 };
 export const compositeShader = {
   uniforms: { tA: { value: null }, tB: { value: null }, tN: { value: null }, tGrain: { value: null }, uP: { value: 0 }, uType: { value: 0 }, uAsp: { value: 1 }, uT: { value: 0 },
     uRes: { value: null }, uC: { value: null }, uHS: { value: null }, uInk: { value: null }, uPaper: { value: null }, uDrops: { value: null }, uDropCol: { value: null }, uGrainA: { value: 1 } },
@@ -10,19 +10,28 @@ export const compositeShader = {
   fragmentShader: NOISE + /* glsl */`
 uniform sampler2D tA,tB,tN,tGrain;uniform float uP,uType,uAsp,uT,uGrainA;uniform vec2 uRes,uC,uHS;uniform vec3 uInk,uPaper,uDropCol;uniform vec4 uDrops[6];varying vec2 vUv;
 float N(vec2 p){return texture2D(tN,p).r;}
+float lobe(vec2 uv,float R,vec2 o){vec2 w=uv*vec2(uAsp,1.);return R*(1.+.14*((N(w*.7+o)-.5)*5.+(N(w*1.9+o.yx)-.5)*2.6)*min(1.,R*4.));}   // organic, smooth irregularity of a spreading wet front
 vec3 A(vec2 uv){return texture2D(tA,clamp(uv,0.,1.)).rgb;}
 vec3 B(vec2 uv){return texture2D(tB,clamp(uv,0.,1.)).rgb;}
 void main(){vec2 uv=vUv;vec2 q=(uv-.5)*vec2(uAsp,1.);float p=uP;vec3 col;
   int ty=int(uType+.5);
   if(ty==0){col=mix(A(uv),B(uv),smoothstep(0.,1.,p));}
-  else if(ty==1){ // DROP — an ink drop lands and blooms outward; the new scene shows through the settled ink
-    vec2 d=(uv-uC)*vec2(uAsp,1.);float r=length(d);float ang=atan(d.y,d.x);
-    float wob=N(vec2(ang*.35,p*.2))*.22+N(vec2(ang*1.4,.5))*.08;
-    float R=pow(p,1.35)*1.9;float edge=R*(1.+wob-.12)-r;
-    float m=smoothstep(0.,.02,edge);float inner=smoothstep(.0,.25+R*.2,edge);
-    vec3 ink=mix(uInk,uInk*.6+.05,N(d*2.+.3));
-    col=mix(A(uv),ink,m);col=mix(col,B(uv),inner*smoothstep(.15,.6,p));
-    float halo=smoothstep(.07,0.,-edge)*step(edge,0.)*(1.-p);col=mix(col,col*.72,halo);
+  else if(ty==1){ // 清水破墨 — a drop of clear water lands on the wet night ink: the ink is pushed back into graded greys with a
+    // soft tide line of displaced pigment and feathered fibre bleed, and clean paper (the new chapter) settles in behind the water
+    vec2 asp=vec2(uAsp,1.);vec2 d=(uv-uC)*asp;float r=length(d);float an=atan(d.y,d.x);vec2 ac=vec2(cos(an),sin(an));
+    float R=.01+.08*(1.-exp(-p*7.))+1.95*pow(p,2.1);
+    float Re=lobe(uv,R,vec2(.6,.2));
+    float fib=N(uv*asp*vec2(150.,38.)+vec2(.4,.2))*.55+N(uv*asp*vec2(40.,160.)+2.3)*.45;
+    float fw=.003+.02*min(R,.7);float e=Re-r+(fib-.5)*fw*2.6;float soft=fw*1.5;
+    vec3 a=A(uv);float la=dot(a,vec3(.3,.59,.11));
+    float gran=clamp((N(uv*asp*11.+.7)-.5)*4.+.5,0.,1.)*.5+clamp((N(uv*asp*37.+.2)-.5)*4.+.5,0.,1.)*.5;
+    float wet=smoothstep(-soft*3.,soft*1.2,e);                        // where the water reaches, the ink dilutes
+    float clear=smoothstep(soft*.4,R*.33+soft*3.,e);                  // washed back to paper
+    float tide=exp(-pow((e+soft*.15)/(fw*.55),2.))*.3*(1.-smoothstep(.55,.85,p));   // displaced pigment gathers softly at the front
+    vec3 g=vec3(la);vec3 paper=vec3(.955,.945,.915);
+    vec3 dil=mix(g,mix(g,paper,.5+.2*gran),wet);dil=mix(dil,g*.45,tide);
+    col=mix(a,dil,wet);
+    float cl2=clear*smoothstep(.02,.4,p);col=mix(col,mix(mix(g,paper,.35+.3*gran),B(uv),smoothstep(.1,.55,p)),cl2*mix(.55,1.,smoothstep(.05,.4,p)));   // water first greys the ink, paper clears in later
     col=mix(col,B(uv),smoothstep(.85,1.,p));                       // lands exactly on B at p=1 (no pop)
   } else if(ty==2){ // FOG — the old scene dissolves into drifting mist, the new one condenses out of it
     float n=N(uv*vec2(uAsp,1.)*.35+vec2(uT*.01,0.))*.7+N(uv*1.3-vec2(uT*.006,0.))*.3;
@@ -79,6 +88,34 @@ void main(){vec2 uv=vUv;vec2 q=(uv-.5)*vec2(uAsp,1.);float p=uP;vec3 col;
     if(uv.x<L){col=A(uv+vec2(open*.68,0.));float fib=smoothstep(.012,0.,L-uv.x)*step(.5,N(vec2(uv.y*60.,.3)));col=mix(col,vec3(.97,.95,.9),fib*.9*fe);}
     else if(uv.x>Rr){col=A(uv-vec2(open*.68,0.));float fib=smoothstep(.012,0.,uv.x-Rr)*step(.5,N(vec2(uv.y*60.,.8)));col=mix(col,vec3(.97,.95,.9),fib*.9*fe);}
     else{col=B(uv);float s=min(uv.x-L,Rr-uv.x);col*=mix(1.,.6+.4*smoothstep(0.,.06,s),fe);}
+  } else if(ty==8){ // 破墨入卷 — one drop of black ink lands on wet xuan paper and diffuses until the ink itself is the night
+    vec3 INK=vec3(.03,.029,.031);col=A(uv);vec2 asp=vec2(uAsp,1.);
+    float kf=clamp((p-.2)/.14,0.,1.);
+    if(kf>0.&&kf<1.){                                                   // the falling drop, slightly stretched by its speed
+      vec2 dp=vec2(uC.x,mix(1.06,uC.y+.01,kf*kf));vec2 d=(uv-dp)*asp;float r0=.0095,L=.01+.07*kf*kf;
+      float yy=clamp(d.y/L,0.,1.);float w=r0*pow(1.-yy,1.6)*step(0.,d.y);
+      float body=smoothstep(r0,r0*.7,length(d*vec2(1.,1.12)));if(d.y>0.&&d.y<L&&w>1e-4)body+=smoothstep(w,w*.5,abs(d.x));
+      float hl=smoothstep(.0035,.0,length(d-vec2(-.003,.003)));
+      col=mix(col,INK+hl*.3,clamp(body,0.,1.)*.95);}
+    float kb=clamp((p-.335)/.53,0.,1.);
+    if(kb>0.){vec2 d=(uv-uC)*asp;float r=length(d);float an=atan(d.y,d.x);vec2 ac=vec2(cos(an),sin(an));
+      float R=.012+.09*(1.-exp(-kb*6.))+1.9*pow(kb,2.2);                // settles, then spreads faster, then eases over the corners
+      float Re=lobe(uv,R,vec2(.31,.17));
+      // short, soft fibre bleed in paper space (xuan fibres wick a little ink past the front)
+      float fib=N(uv*asp*vec2(150.,38.)+vec2(.3,.9))*.55+N(uv*asp*vec2(42.,165.)+1.7)*.45;
+      float fw=.003+.018*min(R,.7);
+      float e=Re-r+(fib-.5)*fw*2.6;                                     // > 0 inside the wet ink
+      float soft=fw*1.5;
+      float wet=smoothstep(-soft*3.,soft*1.5,e);                         // diluted grey halo + body, graded (no band)
+      float core=pow(smoothstep(-soft*.5,R*.5+soft*3.,e),.8);            // ink deepens steadily toward the dense core
+      float gran=clamp((N(uv*asp*11.+.3)-.5)*4.+.5,0.,1.)*.5+clamp((N(uv*asp*37.)-.5)*4.+.5,0.,1.)*.5;
+      float tide=exp(-pow((e-soft*.3)/(fw*.45),2.))*.14*smoothstep(0.,.2,kb)*(1.-smoothstep(.55,.85,kb));   // faint water-ring where the wet front dries
+      float dens=clamp(wet*(.2+.12*gran)+core*.8+tide,0.,1.);
+      vec3 a=col;a=mix(a,vec3(dot(a,vec3(.3,.59,.11))),smoothstep(-soft*5.,soft,e)*.85);          // 墨分五色: the painted world greys as the ink takes it
+      vec3 inked=mix(a,INK,dens);
+      float rev=smoothstep(soft*2.,R*.3+soft*4.,e)*smoothstep(.04,.5,kb);   // inside the dense ink the night scroll condenses out of the black
+      col=mix(inked,B(uv),rev*(.75+.25*gran));}
+    col=mix(col,B(uv),smoothstep(.84,.9,p));
   } else { // STAMP — the seal's shadow descends onto the old scene, the impression transfers unevenly (revealing the new
     // scene's real impression, aligned by projection), then the new scene soaks outward from it like ink into paper.
     vec2 d=(uv-uC)*vec2(uAsp,1.);
