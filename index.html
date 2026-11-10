@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>墨川 MOCHUAN · 数字长卷 冬季发布（虚构品牌示例站）</title>
+<meta name="description" content="墨川是一个虚构的 AI 水墨创作平台。数字长卷 · 冬季发布：墨韵引擎、鹤影动效、鼎器三维、字境排版、流水工作流。本站为原创示例，所有数据与评价均为虚构。">
+<meta name="theme-color" content="#ece4d4">
+<meta property="og:type" content="website">
+<meta property="og:title" content="墨川 · 数字长卷 冬季发布">
+<meta property="og:description" content="让机器学会留白 —— 一幅可以滚动的长卷（虚构品牌示例站）。">
+<meta property="og:image" content="./og.png">
+<meta property="og:locale" content="zh_CN">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect x='3' y='3' width='26' height='26' rx='3' fill='%23b23a2b'/%3E%3Cpath d='M10 9v14M10 9h12M16 9v14M22 9v14M8 23h16' stroke='%23f7efe2' stroke-width='2.2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="./css/style.css">
+<script type="importmap">{"imports":{"three":"./vendor/three/three.module.js","three/addons/":"./vendor/three/addons/"}}</script>
+<script src="./vendor/gsap.min.js"></script>
+<script src="./vendor/lenis.min.js"></script>
+</head>
+<body>
+<a class="skip" href="#main">跳到正文</a>
+
+<div id="loader" role="progressbar" aria-label="加载进度" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+  <div class="ld-paper l"></div><div class="ld-paper r"></div>
+  <div class="roller l"><i></i></div><div class="roller r"><i></i></div>
+  <div class="ld-mid">
+    <div class="ld-seal" aria-hidden="true">墨川</div>
+    <div class="ld-bar" aria-hidden="true"><i></i></div>
+    <div class="ld-row"><span class="ld-t">展 卷 中</span><span class="ld-num">0%</span></div>
+    <div class="ld-step" aria-live="polite">研墨</div>
+  </div>
+</div>
+
+<canvas id="gl" aria-hidden="true"></canvas>
+<div class="mount" aria-hidden="true"><i class="mt"></i><i class="mb"></i></div>
+<div class="topfade" aria-hidden="true"><i class="p"></i><i class="k"></i></div>
+
+<header class="top" id="top">
+  <a class="brand mag" href="#hero" aria-label="墨川 首页"><span class="b-seal" aria-hidden="true">墨</span><span class="b-name">墨川<small>MOCHUAN</small></span></a>
+  <nav class="menu" aria-label="主导航">
+    <a href="#ink">墨韵</a><a href="#features">功能</a><a href="#vessel">鼎器</a><a href="#flow">工作流</a><a href="#works">作品</a><a href="#pricing">价目</a><a href="#faq">问答</a>
+  </nav>
+  <div class="top-r">
+    <button class="snd mag" type="button" aria-pressed="false" aria-label="环境声音开关"><span class="wave" aria-hidden="true"><i></i><i></i><i></i></span><span class="snd-t">声 关</span></button>
+    <a class="btn btn-ink sm mag" href="#join" data-cursor="seal">申请体验</a>
+    <button class="burger" type="button" aria-expanded="false" aria-controls="mmenu" aria-label="打开菜单"><i></i><i></i></button>
+  </div>
+</header>
+<div class="mmenu" id="mmenu" hidden>
+  <nav aria-label="移动端导航">
+    <a href="#vision"><b>远山</b>愿景</a><a href="#ink"><b>墨韵</b>生成</a><a href="#features"><b>鹤影</b>功能</a><a href="#vessel"><b>鼎器</b>三维</a><a href="#type"><b>字境</b>排版</a>
+    <a href="#flow"><b>流水</b>工作流</a><a href="#works"><b>题跋</b>作品</a><a href="#pricing"><b>价目</b>方案</a><a href="#faq"><b>问答</b>FAQ</a><a href="#join"><b>卷尾</b>申请</a>
+  </nav>
+</div>
+<nav class="seals" aria-label="章节进度"></nav>
+<div class="scrollbar" aria-hidden="true"><i></i></div>
+
+<main id="main" tabindex="-1">
+
+<!-- 0 · 卷首 -->
+<section class="ch ch-hero" id="hero" data-scene="mountains" data-seal="卷首" aria-label="卷首">
+  <div class="hero-wrap">
+    <h1 class="op-title" data-split>数字长卷</h1>
+    <div class="op-side">
+      <div class="op-seal" aria-hidden="true">墨川<br>发布</div>
+      <p class="op-sub vt">冬季发布 · 二〇二六</p>
+    </div>
+  </div>
+  <p class="op-en">The Handscroll Edition — Winter 2026 · <span class="tag-fic">虚构品牌示例</span></p>
+  <a class="op-cue" href="#vision" aria-label="向下展卷"><span>向下展卷</span><i aria-hidden="true"></i></a>
+</section>
+
+<!-- 1 · 远山 愿景 + 数据 -->
+<section class="ch ch-vision" id="vision" data-scene="mountains" data-seal="远山" aria-labelledby="h-vision">
+  <h2 class="vision-v vt" id="h-vision" data-split>让机器学会留白</h2>
+  <div class="blk halo">
+    <p class="kicker">壹 · 远山</p>
+    <p class="body" data-reveal>墨川是一个面向创作者的 AI 水墨创作平台（虚构品牌）。这一季，我们把十二项更新画进一幅长卷：从一笔墨色，到一整座会呼吸的山。</p>
+    <dl class="stats" data-reveal>
+      <div><dt>笔触模型</dt><dd><b data-count="128">0</b><span>种</span></dd></div>
+      <div><dt>平均生成</dt><dd><b data-count="3.2" data-dec="1">0</b><span>秒</span></dd></div>
+      <div><dt>内测创作者</dt><dd><b data-count="18600">0</b><span>位</span></dd></div>
+      <div><dt>导出分辨率</dt><dd><b data-count="16">0</b><span>K</span></dd></div>
+    </dl>
+    <p class="note">* 以上数据均为示例（虚构）</p>
+  </div>
+</section>
+
+<!-- 2 · 墨韵 Playground -->
+<section class="ch ch-ink" id="ink" data-scene="inkpool" data-trans="drop" data-seal="墨韵" aria-labelledby="h-ink">
+  <header class="sec-h halo">
+    <p class="kicker">贰 · 墨韵引擎 <span class="en">Ink Engine</span></p>
+    <h2 class="t" id="h-ink" data-split>一句话，落墨成画</h2>
+    <p class="body" data-reveal>输入一句诗意的描述，选择笔法，墨韵引擎会按「先淡后浓、先远后近」的顺序逐层落墨。下面是一个完全在浏览器里运行的小样。</p>
+  </header>
+  <div class="play panel" data-reveal>
+    <form class="play-f" id="playForm" autocomplete="off">
+      <label class="lbl" for="prompt">描述</label>
+      <div class="prompt-row">
+        <input id="prompt" name="prompt" type="text" maxlength="24" value="寒江独钓 远山有雪" aria-describedby="prompt-help" data-cursor="text">
+        <button class="btn btn-ink mag" type="submit" data-cursor="brush">落墨</button>
+      </div>
+      <p class="help" id="prompt-help">试试：山、水、月、鹤、舟、松、竹、雪、雨、梅、云 —— 最多 24 字</p>
+      <div class="chips" role="group" aria-label="灵感">
+        <button type="button" class="chip" data-p="松下问童子 云深">松下 · 云深</button>
+        <button type="button" class="chip" data-p="月出惊山鸟 鹤">月出 · 鹤</button>
+        <button type="button" class="chip" data-p="竹林夜雨">竹林 · 夜雨</button>
+        <button type="button" class="chip" data-p="春江 梅花 日出">春江 · 日出</button>
+      </div>
+      <fieldset class="styles">
+        <legend class="lbl">笔法</legend>
+        <div class="seg" role="radiogroup" aria-label="笔法">
+          <label><input type="radio" name="style" value="xieyi" checked><span>写意</span></label>
+          <label><input type="radio" name="style" value="gongbi"><span>工笔</span></label>
+          <label><input type="radio" name="style" value="pomo"><span>泼墨</span></label>
+          <label><input type="radio" name="style" value="qinglv"><span>青绿</span></label>
+        </div>
+      </fieldset>
+      <div class="sliders">
+        <label class="rng"><span>墨色浓淡</span><input type="range" id="inkDen" min="0" max="100" value="60" aria-label="墨色浓淡"></label>
+      </div>
+    </form>
+    <figure class="play-out">
+      <canvas id="playCv" width="720" height="480" role="img" aria-label="生成的水墨画预览"></canvas>
+      <figcaption><span class="st" id="playSt" aria-live="polite">就绪</span><span class="tag-fic">浏览器内程序化生成 · 示例</span></figcaption>
+    </figure>
+  </div>
+  <div class="ba-wrap" data-reveal>
+    <div class="ba-copy halo"><p class="kicker sm">草图 → 成画</p><h3 class="h3">拖动，看一张草图如何被「养」成一幅画</h3></div>
+    <div class="ba panel" id="ba" data-cursor="drag">
+      <canvas class="ba-a" width="900" height="420" aria-hidden="true"></canvas>
+      <div class="ba-b-clip"><canvas class="ba-b" width="900" height="420" aria-hidden="true"></canvas></div>
+      <div class="ba-h" aria-hidden="true"><i></i></div>
+      <span class="ba-l l">草图</span><span class="ba-l r">成画</span>
+      <input class="ba-r" type="range" min="0" max="100" value="50" aria-label="草图与成画对比位置">
+    </div>
+  </div>
+</section>
+
+<!-- 3 · 鹤影 功能矩阵 -->
+<section class="ch ch-feat" id="features" data-scene="clouds" data-trans="fog" data-seal="鹤影" aria-labelledby="h-feat">
+  <header class="sec-h halo">
+    <p class="kicker">叁 · 鹤影 <span class="en">What's new</span></p>
+    <h2 class="t" id="h-feat" data-split>十二项更新，六个篇章</h2>
+  </header>
+  <div class="feat panel" data-reveal>
+    <div class="tabs" role="tablist" aria-label="功能">
+      <button role="tab" id="tab-0" aria-controls="tp-0" aria-selected="true" tabindex="0">墨韵引擎</button>
+      <button role="tab" id="tab-1" aria-controls="tp-1" aria-selected="false" tabindex="-1">鹤影动效</button>
+      <button role="tab" id="tab-2" aria-controls="tp-2" aria-selected="false" tabindex="-1">鼎器三维</button>
+      <button role="tab" id="tab-3" aria-controls="tp-3" aria-selected="false" tabindex="-1">字境排版</button>
+      <button role="tab" id="tab-4" aria-controls="tp-4" aria-selected="false" tabindex="-1">流水工作流</button>
+      <button role="tab" id="tab-5" aria-controls="tp-5" aria-selected="false" tabindex="-1">协作题跋</button>
+      <i class="tab-ink" aria-hidden="true"></i>
+    </div>
+    <div class="tps">
+      <div class="tp" role="tabpanel" id="tp-0" aria-labelledby="tab-0" tabindex="0"><div class="tp-t"><h3 class="h3">墨分五色</h3><p>浓、淡、干、湿、焦五种墨色可单独调节；支持「先淡后浓」的分层生成，每一层都可回退。</p><ul class="ticks"><li>128 种笔触模型（示例）</li><li>宣纸、绢本、皮纸三种纸性</li><li>可导出分层 PSD</li></ul></div><div class="tp-v v-ink" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div class="tp" role="tabpanel" id="tp-1" aria-labelledby="tab-1" tabindex="0" hidden><div class="tp-t"><h3 class="h3">画一条路线，群鹤就会飞</h3><p>在下方画布上拖出一条路线 —— 鹤群会沿着它飞过。真实的群体规律：分离、对齐、聚拢。</p><ul class="ticks"><li>滑翔 / 振翅自动切换</li><li>镜头语言预设 8 种</li></ul></div>
+        <div class="tp-v v-route" data-cursor="brush"><svg class="route" viewBox="0 0 400 220" role="img" aria-label="路线画布：按住拖动画出飞行路线"><path class="rt-guide" d="M20 170 C120 40 260 210 380 60"/><path class="rt-path" d=""/><g class="rt-birds"></g></svg><button type="button" class="btn btn-ghost sm rt-clear">清空路线</button></div></div>
+      <div class="tp" role="tabpanel" id="tp-2" aria-labelledby="tab-2" tabindex="0" hidden><div class="tp-t"><h3 class="h3">从草图到可打印器物</h3><p>上传一张线稿，生成带纹样与锈色的三维模型。导出 glTF / STL，可直接 3D 打印打样。</p><ul class="ticks"><li>饕餮纹、云雷纹等纹样库</li><li>锈色可用文字描述</li></ul></div><div class="tp-v v-3d" aria-hidden="true"><i></i></div></div>
+      <div class="tp" role="tabpanel" id="tp-3" aria-labelledby="tab-3" tabindex="0" hidden><div class="tp-t"><h3 class="h3">竖排、题款、印章</h3><p>版式模型理解中文的阅读方向与留白比例，自动推荐题款位置与印章大小。</p><ul class="ticks"><li>竖排标点自动挤压</li><li>闲章 / 名章 / 引首章</li></ul></div><div class="tp-v v-type" aria-hidden="true"><span>山</span><span>高</span><span>月</span><span>小</span></div></div>
+      <div class="tp" role="tabpanel" id="tp-4" aria-labelledby="tab-4" tabindex="0" hidden><div class="tp-t"><h3 class="h3">一次设定，自动流过</h3><p>生成 → 筛选 → 调色 → 题款 → 导出，把重复的步骤连成一条河。</p><ul class="ticks"><li>批量 500 张 / 次（示例）</li><li>Webhook 与文件夹监听</li></ul></div><div class="tp-v v-flow" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div></div>
+      <div class="tp" role="tabpanel" id="tp-5" aria-labelledby="tab-5" tabindex="0" hidden><div class="tp-t"><h3 class="h3">在画上题跋，而不是在群里截图</h3><p>团队成员可以直接在画面上圈注、题字、盖章确认，每一次修改都有版本。</p><ul class="ticks"><li>无限画布评论</li><li>印章即审批</li></ul></div><div class="tp-v v-collab" aria-hidden="true"><i></i><i></i><i></i></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4 · 鼎器 -->
+<section class="ch ch-vessel dark" id="vessel" data-scene="museum" data-trans="dive" data-seal="鼎器" aria-labelledby="h-vessel">
+  <div class="vessel-hit" data-cursor="drag" aria-hidden="true"></div>
+  <div class="blk">
+    <p class="kicker">肆 · 鼎器三维 <span class="en">3D Objects</span></p>
+    <h2 class="t" id="h-vessel" data-split>拖动它，看纹样与锈色</h2>
+    <p class="body" data-reveal>这只鼎完全由程序生成：车削轮廓、饕餮与云雷纹浮雕、青铜的 PBR 材质与绿锈。在右侧拖动即可旋转（带惯性）。</p>
+    <div class="patina" role="radiogroup" aria-label="锈色" data-reveal>
+      <button type="button" role="radio" aria-checked="true" data-v="1"><i style="--c:#4f7d6d"></i>出土青绿</button>
+      <button type="button" role="radio" aria-checked="false" data-v=".45"><i style="--c:#6b4a2c"></i>传世包浆</button>
+      <button type="button" role="radio" aria-checked="false" data-v="0"><i style="--c:#b8894e"></i>新铸</button>
+    </div>
+    <dl class="specs" data-reveal><div><dt>面数</dt><dd>≈ 120k（程序生成）</dd></div><div><dt>贴图</dt><dd>高度 · 法线 · 反照 · ORM</dd></div><div><dt>导出</dt><dd>glTF · STL · USDZ（示例）</dd></div></dl>
+  </div>
+</section>
+
+<!-- 5 · 字境 -->
+<section class="ch ch-type" id="type" data-scene="callig" data-trans="brush" data-seal="字境" aria-labelledby="h-type">
+  <div class="blk">
+    <p class="kicker">伍 · 字境排版 <span class="en">Typography</span></p>
+    <h2 class="t" id="h-type" data-split>一笔一画，都有版式</h2>
+    <p class="body" data-reveal>中文排版不只是横排。切换下面的选项，看版式模型如何重新安排题款与印章。</p>
+    <div class="lay panel" data-reveal>
+      <div class="lay-ctl">
+        <div class="seg sm" role="radiogroup" aria-label="排版方向">
+          <label><input type="radio" name="dir" value="v" checked><span>竖排</span></label>
+          <label><input type="radio" name="dir" value="h"><span>横排</span></label>
+        </div>
+        <div class="seg sm" role="radiogroup" aria-label="印章位置">
+          <label><input type="radio" name="sealpos" value="br" checked><span>落款下</span></label>
+          <label><input type="radio" name="sealpos" value="tl"><span>引首</span></label>
+          <label><input type="radio" name="sealpos" value="none"><span>不钤印</span></label>
+        </div>
+      </div>
+      <div class="lay-prev" id="layPrev" data-dir="v" data-seal="br">
+        <p class="lp-poem">孤舟蓑笠翁独钓寒江雪</p><p class="lp-sig">墨川 题</p><i class="lp-seal" aria-hidden="true">墨川</i>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6 · 流水 (horizontal pinned) -->
+<section class="ch ch-flow" id="flow" data-scene="snow" data-trans="unroll" data-seal="流水" aria-labelledby="h-flow">
+  <div class="pin">
+    <div class="flow-head"><div class="halo" style="display:inline-block">
+      <p class="kicker">陆 · 流水工作流 <span class="en">Workflow</span></p>
+      <h2 class="t" id="h-flow" data-split>一次设定，自动流过</h2>
+    </div></div>
+    <ol class="track" aria-label="工作流步骤">
+      <li class="step panel tilt"><span class="no">一</span><h3>生成</h3><p>一句描述，批量生成 24 张候选，每张都带笔触元数据。</p><span class="dur">≈ 3 秒 / 张</span></li>
+      <li class="step panel tilt"><span class="no">二</span><h3>筛选</h3><p>审美模型按「气韵、构图、留白」打分，自动留下前五。</p><span class="dur">≈ 1 秒</span></li>
+      <li class="step panel tilt"><span class="no">三</span><h3>调色</h3><p>统一墨色与纸色，套用品牌色板，保证一整套作品气质一致。</p><span class="dur">≈ 2 秒</span></li>
+      <li class="step panel tilt"><span class="no">四</span><h3>题款</h3><p>竖排题字、钤印，位置由版式模型给出，可手动微调。</p><span class="dur">≈ 1 秒</span></li>
+      <li class="step panel tilt"><span class="no">五</span><h3>导出</h3><p>16K 原图、分层 PSD、社媒尺寸，一键送达团队文件夹。</p><span class="dur">≈ 4 秒</span></li>
+    </ol>
+    <div class="timeline">
+      <label class="tl-l" for="tl">流程进度</label>
+      <input id="tl" type="range" min="0" max="100" value="0" aria-valuetext="第一步 生成">
+      <ol class="tl-ticks" aria-hidden="true"><li>生成</li><li>筛选</li><li>调色</li><li>题款</li><li>导出</li></ol>
+    </div>
+  </div>
+</section>
+
+<!-- 7 · 题跋 作品 + 评价 -->
+<section class="ch ch-works dark" id="works" data-scene="bamboo" data-trans="tear" data-seal="题跋" aria-labelledby="h-works">
+  <header class="sec-h">
+    <p class="kicker">柒 · 作品与题跋 <span class="en">Gallery</span></p>
+    <h2 class="t" id="h-works" data-split>月下竹林，一卷众作</h2>
+    <p class="body" data-reveal>以下作品全部由本页的程序化画笔即时生成（示例）。左右拖动浏览，点击放大。</p>
+  </header>
+  <div class="gal" data-reveal>
+    <div class="gal-track" id="gal" data-cursor="drag" tabindex="0" aria-label="作品画廊，可用左右方向键滚动"></div>
+    <div class="gal-ctl"><button type="button" class="btn btn-ghost sm gal-p" aria-label="上一组">←</button><div class="gal-bar" aria-hidden="true"><i></i></div><button type="button" class="btn btn-ghost sm gal-n" aria-label="下一组">→</button></div>
+  </div>
+  <div class="quotes" data-reveal>
+    <div class="q-viewport" aria-live="polite">
+      <figure class="q on"><blockquote>“第一次觉得 AI 生成的画面懂得留白。”</blockquote><figcaption>某独立插画师 · <span class="tag-fic">虚构评价</span></figcaption></figure>
+      <figure class="q"><blockquote>“鹤影把我们的品牌片周期从两周缩到两天。”</blockquote><figcaption>某品牌设计团队 · <span class="tag-fic">虚构评价</span></figcaption></figure>
+      <figure class="q"><blockquote>“鼎器生成的模型可以直接拿去打样。”</blockquote><figcaption>某文创工作室 · <span class="tag-fic">虚构评价</span></figcaption></figure>
+      <figure class="q"><blockquote>“竖排题款终于不用手动一个字一个字挪了。”</blockquote><figcaption>某出版社美编 · <span class="tag-fic">虚构评价</span></figcaption></figure>
+    </div>
+    <div class="q-ctl"><button type="button" class="btn btn-ghost sm q-p" aria-label="上一条评价">←</button><div class="q-dots" role="tablist" aria-label="评价"></div><button type="button" class="btn btn-ghost sm q-n" aria-label="下一条评价">→</button></div>
+  </div>
+</section>
+
+<!-- 8 · 价目 + 问答 -->
+<section class="ch ch-price" id="pricing" data-scene="seal" data-trans="stamp" data-seal="价目" aria-labelledby="h-price">
+  <header class="sec-h">
+    <p class="kicker">捌 · 价目 <span class="en">Pricing</span></p>
+    <h2 class="t" id="h-price" data-split>按需取墨</h2>
+    <div class="bill" role="group" aria-label="计费周期">
+      <button type="button" class="on" aria-pressed="true" data-b="m">按月</button><button type="button" aria-pressed="false" data-b="y">按年 <em>省 20%</em></button><i aria-hidden="true"></i>
+    </div>
+  </header>
+  <div class="plans">
+    <article class="plan panel tilt" data-reveal><h3>小品</h3><p class="pd">个人练笔</p><p class="price"><span class="cur-y">¥</span><b data-m="0" data-y="0">0</b><span class="per">/ 月</span></p><ul class="ticks"><li>每月 60 次生成</li><li>写意 / 工笔两种笔法</li><li>2K 导出</li></ul><a class="btn btn-ghost mag" href="#join">免费开始</a></article>
+    <article class="plan panel tilt hot" data-reveal><span class="rib">推荐</span><h3>立轴</h3><p class="pd">独立创作者</p><p class="price"><span class="cur-y">¥</span><b data-m="68" data-y="54">68</b><span class="per">/ 月</span></p><ul class="ticks"><li>不限次生成</li><li>全部笔法 · 鹤影动效</li><li>8K 导出 · 分层 PSD</li></ul><a class="btn btn-seal mag" href="#join" data-cursor="seal">申请体验</a></article>
+    <article class="plan panel tilt" data-reveal><h3>长卷</h3><p class="pd">团队与品牌</p><p class="price"><span class="cur-y">¥</span><b data-m="298" data-y="238">298</b><span class="per">/ 席 / 月</span></p><ul class="ticks"><li>鼎器三维 · 流水工作流</li><li>协作题跋 · 品牌色板</li><li>16K 导出 · 优先队列</li></ul><a class="btn btn-ghost mag" href="#join">联系我们</a></article>
+  </div>
+  <p class="note center">价格为虚构示例，不构成任何报价。</p>
+  <div class="faq" id="faq" data-reveal>
+    <h3 class="h3">常见问答</h3>
+    <div class="acc">
+      <h4><button type="button" aria-expanded="false" aria-controls="fa1" id="fq1">墨川是真实的产品吗？<i aria-hidden="true"></i></button></h4><div class="fa" id="fa1" role="region" aria-labelledby="fq1" hidden><p>不是。墨川是为本示例站虚构的品牌，页面中的所有数据、价格与评价都是示例。</p></div>
+      <h4><button type="button" aria-expanded="false" aria-controls="fa2" id="fq2">生成的作品版权归谁？<i aria-hidden="true"></i></button></h4><div class="fa" id="fa2" role="region" aria-labelledby="fq2" hidden><p>在这个虚构设定里，作品版权归创作者本人；平台只保留用于展示的非独占授权。</p></div>
+      <h4><button type="button" aria-expanded="false" aria-controls="fa3" id="fq3">本页的三维与画面是视频吗？<i aria-hidden="true"></i></button></h4><div class="fa" id="fa3" role="region" aria-labelledby="fq3" hidden><p>不是。所有山水、鹤群、青铜鼎与印章都在你的浏览器里用 WebGL 实时程序化生成，没有使用任何图片或视频素材。</p></div>
+      <h4><button type="button" aria-expanded="false" aria-controls="fa4" id="fq4">设备性能不够怎么办？<i aria-hidden="true"></i></button></h4><div class="fa" id="fa4" role="region" aria-labelledby="fq4" hidden><p>页面会按显卡档位自动降低分辨率与细节；开启系统「减少动态效果」后，转场会简化为淡入淡出。</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 9 · 卷尾 -->
+<section class="ch ch-end" id="join" data-scene="seal" data-seal="卷尾" aria-labelledby="h-end">
+  <div class="end-grid">
+    <div class="road" data-reveal>
+      <h3 class="h3">更新与路线</h3>
+      <ol class="rm">
+        <li class="done"><time>2026 · 秋</time><b>墨韵引擎 2.0</b><span>五色分层生成</span></li>
+        <li class="done"><time>2026 · 冬</time><b>鹤影 · 鼎器</b><span>本次发布</span></li>
+        <li><time>2027 · 春</time><b>绢本纸性</b><span>筹备中</span></li>
+        <li><time>2027 · 夏</time><b>多人长卷</b><span>构想中</span></li>
+      </ol>
+      <p class="note">路线为虚构示例。</p>
+    </div>
+    <div class="join panel">
+      <h2 class="t sm" id="h-end" data-split>展卷，即是开始</h2>
+      <p class="body">留下邮箱，第一批体验名额开放时我们会告诉你。（仅前端演示，不会发送任何数据。）</p>
+      <form class="wl" id="wl" novalidate>
+        <label class="lbl" for="em">邮箱</label>
+        <div class="wl-row">
+          <input id="em" name="email" type="email" inputmode="email" placeholder="name@example.com" aria-describedby="em-msg" required data-cursor="text">
+          <button class="btn btn-seal mag" type="submit" disabled data-cursor="seal"><span class="bt">申请体验</span></button>
+        </div>
+        <label class="ck"><input type="checkbox" name="news" checked> 同时订阅季刊《长卷》（示例）</label>
+        <p class="msg" id="em-msg" aria-live="polite"></p>
+      </form>
+    </div>
+  </div>
+  <footer class="foot">
+    <div class="f-brand"><span class="b-seal" aria-hidden="true">墨</span><div><b>墨川 MOCHUAN</b><p>让机器学会留白 · 虚构品牌示例站</p></div></div>
+    <nav class="f-map" aria-label="站点地图">
+      <div><h4>产品</h4><a href="#ink">墨韵引擎</a><a href="#features">鹤影动效</a><a href="#vessel">鼎器三维</a><a href="#type">字境排版</a><a href="#flow">流水工作流</a></div>
+      <div><h4>资源</h4><a href="#works">作品</a><a href="#faq">问答</a><a href="#join">更新路线</a><a href="./404.html">开发者文档</a></div>
+      <div><h4>公司</h4><a href="./404.html">关于</a><a href="./404.html">招聘</a><a href="./404.html">隐私</a><a href="./404.html">条款</a></div>
+    </nav>
+    <p class="f-legal">© 2026 墨川（虚构）· 本站为原创设计示例，所有内容、数据与评价均为虚构 · <a href="#hero">回到卷首 ↑</a></p>
+  </footer>
+</section>
+</main>
+
+<div class="lb" id="lb" role="dialog" aria-modal="true" aria-label="作品大图" hidden>
+  <button type="button" class="lb-x" aria-label="关闭">×</button>
+  <figure><canvas id="lbCv" width="1200" height="800"></canvas><figcaption id="lbCap"></figcaption></figure>
+</div>
+<div class="cur" aria-hidden="true"><div class="ring"></div><div class="dot"></div><span class="lab"></span></div>
+<noscript><p style="padding:40px">需要启用 JavaScript 才能观看长卷。</p></noscript>
+<script type="module" src="./js/main.js"></script>
+</body>
+</html>
