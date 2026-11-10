@@ -90,7 +90,7 @@ export function createSnow(ctx) {
     resize(w, h) { camera.aspect = w / h; camera.fov = w / h < .8 ? 56 : 40;
       // lens shift: lift river + ridges into the free upper band above the workflow cards (verticals stay vertical)
       if (w / h > 1) camera.setViewOffset(w, h, 0, h * .2, w, h); else camera.clearViewOffset(); camera.updateProjectionMatrix(); ripMat.uniforms.uAsp.value = w / h; const pr = renderer.getPixelRatio(); ground.material.uniforms.uRes.value.set(w * pr, h * pr); snow.material.uniforms.uPR.value = pr; },
-    click(u, v) { ripMat.uniforms.uPtr.value.set(u, v); ripMat.uniforms.uImp.value = 1.4; live = 240; },
+    click(u, v) { ripMat.uniforms.uPtr.value.set(u, v); ripMat.uniforms.uImp.value = 1.4; live = 240; return true; },
     update(st) {
       const { t, dt, p, ptr } = st; ground.material.uniforms.uT.value = t; reeds.material.uniforms.uT.value = t; snow.material.uniforms.uT.value = t;
       const tx = lerp(4, 48, p);

@@ -83,7 +83,7 @@ export function createInkPool(ctx) {
   return {
     id: 'inkpool', scene, camera, dark: 0, jobs: [], finish() { simMat.uniforms.uSplat.value = 0; simMat.uniforms.uPrev.value = rA.texture; renderer.setRenderTarget(rB); renderer.render(simScene, simCam); renderer.setClearColor(0, 0); for (const r of [rA, rB]) { renderer.setRenderTarget(r); renderer.clear(); } renderer.setRenderTarget(null); /* warm sim program */ },
     resize(w, h) { camera.aspect = w / h; camera.updateProjectionMatrix(); bg.material.uniforms.uAsp.value.set(w / h, 1); simMat.uniforms.uAsp.value = w / h; motes.material.uniforms.uPR.value = Math.min(renderer.getPixelRatio(), 2); },
-    click(u, v) { simMat.uniforms.uDrop.value.set(u, v, .07 + Math.random() * .03, 1.1); drop = 2; },
+    click(u, v) { simMat.uniforms.uDrop.value.set(u, v, .07 + Math.random() * .03, 1.1); drop = 2; return true; },   // renders its own drop: no extra screen blot (it outlived the chapter)
     update(st) {
       const { t, dt, p, ptr } = st; for (const u of tU) u.value = t;
       plumes.forEach((m, i) => { m.material.uniforms.uBloom.value = clamp((p - m.userData.delay * .5) * 1.6 + .25 + Math.sin(t * .1 + i) * .02); });
